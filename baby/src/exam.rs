@@ -900,7 +900,7 @@ mod tests {
 
     #[test]
     fn the_transformer_is_put_the_same_questions_and_never_says_it_does_not_know_unless_cut() {
-        let dir = std::env::temp_dir().join(format!("exam_tf_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("exam_tf_{}", crate::platform::unique_id()));
         let dir = dir.to_string_lossy().to_string();
         write(&dir, 6, 1).unwrap();
         let exam = load(&dir).unwrap();
@@ -917,7 +917,7 @@ mod tests {
 
     #[test]
     fn the_transformer_on_the_adaptive_stream_answers_every_question_in_every_mode() {
-        let dir = std::env::temp_dir().join(format!("adapt_tf_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("adapt_tf_{}", crate::platform::unique_id()));
         let dir = dir.to_string_lossy().to_string();
         write_adapt(&dir, 1, 1, 0.0, 0.0).unwrap();
         let mut a = load_adapt(&dir).unwrap();
@@ -961,7 +961,7 @@ mod tests {
 
     #[test]
     fn the_wrong_teacher_tier_is_wrong_the_same_way_every_time_a_fact_comes_up() {
-        let dir = std::env::temp_dir().join(format!("adapt_wrong_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("adapt_wrong_{}", crate::platform::unique_id()));
         let dir = dir.to_string_lossy().to_string();
         let (_, clean) = write_adapt(&dir, 1, 6, 0.0, 0.0).unwrap();
         let a = load_adapt(&dir).unwrap();
@@ -983,7 +983,7 @@ mod tests {
         if !std::process::Command::new("python3").arg("--version").output().map_or(false, |o| o.status.success()) {
             return;
         }
-        let dir = std::env::temp_dir().join(format!("adapt_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("adapt_{}", crate::platform::unique_id()));
         let dir = dir.to_string_lossy().to_string();
         let (_, n) = write_adapt(&dir, 1, 1, 0.0, 0.0).unwrap();
         let a = load_adapt(&dir).unwrap();
@@ -1003,7 +1003,7 @@ mod tests {
 
     #[test]
     fn the_exam_is_written_read_back_and_the_baby_passes_it_on_honesty() {
-        let dir = std::env::temp_dir().join(format!("exam_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("exam_{}", crate::platform::unique_id()));
         let dir = dir.to_string_lossy().to_string();
         let (lessons, questions) = write(&dir, 8, 1).unwrap();
         let exam = load(&dir).unwrap();

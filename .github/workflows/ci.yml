@@ -203,3 +203,71 @@ jobs:
       - name: Math accuracy audit (reported)
         run: |
           cargo run --release --offline --example mathprint -- audit | grep -E '^(audit|# audit)' || true
+
+  # WebAssembly (WASI) under Wasmtime: a sandbox with no operating system underneath, and a math library compiled into the program itself (so it should
+  # not depend on the host). Wasmtime is downloaded at a fixed version and verified against its published SHA-256 before it is run. Some things cannot run
+  # there (starting other programs: `scale --sweep`, `adapt-drive`, the Python pipe test, which skips itself; `std::env::temp_dir()` and
+  # `std::process::id()` panic, so tests use `platform::temp_dir()` and `platform::unique_id()` with TMPDIR set). Reported like the other non-reference
+  # rows: build, tests and the scorecard WRONG gate can fail the job; the fingerprint, accuracy audit and golden check only report.
+  wasi:
+    name: wasi-wasm32-wasmtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      WASMTIME_VERSION: v50.0.0
+      WASMTIME_SHA256: 77c19ee0437991f9ac7837b9c269d9c7076744f85dad263fea5214cc2723c7ff
+      TARGET_FLAG: --target wasm32-wasip1
+      CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime run --dir . --dir /tmp --env TMPDIR=/tmp
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch
+        with:
+          toolchain: stable
+          targets: wasm32-wasip1
+
+      - name: Install Wasmtime (fixed version, checksum verified)
+        run: |
+          mkdir -p "$HOME/wasmtime-dl" && cd "$HOME/wasmtime-dl"
+          curl -fsSL -o wasmtime.tar.xz "https://github.com/bytecodealliance/wasmtime/releases/download/${WASMTIME_VERSION}/wasmtime-${WASMTIME_VERSION}-x86_64-linux.tar.xz"
+          echo "${WASMTIME_SHA256}  wasmtime.tar.xz" | sha256sum -c -
+          tar -xJf wasmtime.tar.xz --strip-components=1
+          echo "$HOME/wasmtime-dl" >> "$GITHUB_PATH"
+
+      - name: Platform and toolchain (recorded)
+        run: |
+          rustc -Vv
+          wasmtime --version
+
+      - name: Build and tests (under Wasmtime)
+        run: |
+          cargo build --release --offline $TARGET_FLAG
+          cargo test --release --offline $TARGET_FLAG
+
+      - name: Scorecard must report 0.0% wrong
+        run: |
+          cargo run --release --offline $TARGET_FLAG --bin baby -- school | tee school.out
+          rows=$(grep -E '^ +(taught|reworded|never taught|beyond the taught range) ' school.out)
+          test "$(echo "$rows" | wc -l)" -eq 4
+          if echo "$rows" | grep -vE ' 0\.0% *$'; then echo "WRONG column above 0.0%"; exit 1; fi
+
+      - name: Math fingerprint (reported)
+        run: |
+          cargo run --release --offline $TARGET_FLAG --example mathprint > mathprint.out
+          grep -E '^(fp|const) ' mathprint.out
+          grep -v '^#' mathprint.out | tr -d '\r' > got.txt
+          grep -v '^#' baby/examples/mathprint.expected | tr -d '\r' > want.txt
+          if diff -u want.txt got.txt > mathprint.diff; then echo "Math fingerprint on wasi: identical to the Linux x86_64 reference."; else echo "Math fingerprint on wasi: DIFFERS from the reference (first lines follow)"; head -30 mathprint.diff; fi
+
+      - name: Math accuracy audit (reported)
+        run: |
+          cargo run --release --offline $TARGET_FLAG --example mathprint -- audit | grep -E '^(audit|# audit)' || true
+
+      - name: Golden outputs (reported)
+        run: |
+          set +e
+          bash golden/check.sh 2>&1 | tr -d '\r' | grep -E '^(golden|NOT REPRODUCIBLE|the [0-9]+ runs|could not)'
+          echo "golden check status: ${PIPESTATUS[0]}"
+          exit 0

@@ -295,7 +295,7 @@ pub fn run(seed: u64, sizes: &[usize], layers: usize, epochs: usize) {
     // the baby
     let (school, secs, joules) = meter.run(|| School::train(&world, seed, true));
     let file_kb = {
-        let tmp = std::env::temp_dir().join(format!("compare_{}.school", std::process::id()));
+        let tmp = crate::platform::temp_dir().join(format!("compare_{}.school", crate::platform::unique_id()));
         let path = tmp.to_string_lossy().to_string();
         let kb = school.save(&path).ok().and_then(|_| std::fs::metadata(&path).ok()).map_or(0, |m| m.len() / 1024);
         std::fs::remove_file(&path).ok();

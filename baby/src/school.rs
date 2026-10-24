@@ -3520,7 +3520,7 @@ mod tests {
         let mut s = sums_school(|a, b| (a + b).min(30));
         s.set_careful(true);
         s.learn("what is 24 zork 12", "30", Some("zork")).unwrap();
-        let dir = std::env::temp_dir().join(format!("repaired_program_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("repaired_program_{}", crate::platform::unique_id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("s.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
@@ -3616,7 +3616,7 @@ mod tests {
         s.set_guess_scales([0.8, 0.4]);
         let before = s.focus("what is 7 zork 5 and also 9 zorf");
         assert!(before.contains(crate::selector::BLANK), "{before}");
-        let dir = std::env::temp_dir().join(format!("selector_school_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("selector_school_{}", crate::platform::unique_id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("s.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
@@ -3849,7 +3849,7 @@ mod tests {
         let near = s.ask("what is 14 zork6 3").guess;
         assert!(near.is_some(), "{}", s.ask("what is 14 zork6 3").how);
         // the record survives saving and loading
-        let dir = std::env::temp_dir().join(format!("guess_record_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("guess_record_{}", crate::platform::unique_id()));
         let path = dir.join("a.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
         assert_eq!(School::load(&path).unwrap().guess_record(), s.guess_record());
@@ -3892,7 +3892,7 @@ mod tests {
         assert!(s.library_text().trim().is_empty() || !s.library_text().contains("apart"), "{}", s.library_text());
         assert!(s.check_myself(3).is_empty());
         // it survives saving and loading
-        let dir = std::env::temp_dir().join(format!("partial_program_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("partial_program_{}", crate::platform::unique_id()));
         let path = dir.join("a.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
         let back = School::load(&path).unwrap();
@@ -4048,7 +4048,7 @@ mod tests {
         // and what it knows is recognized
         assert_eq!(s.ask("what is 7 zork3 4").answer.as_deref(), Some("11"));
         // the calibration survives saving and loading
-        let dir = std::env::temp_dir().join(format!("route_calibration_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("route_calibration_{}", crate::platform::unique_id()));
         let path = dir.join("a.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
         let back = School::load(&path).unwrap();
@@ -4105,7 +4105,7 @@ mod tests {
         let mut s = sums_school(|a, b| a + b);
         s.set_careful(true);
         assert!(s.learn_wondered("what is 8 zork 9", "19", "zork").unwrap().disputed);
-        let dir = std::env::temp_dir().join(format!("disputed_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("disputed_{}", crate::platform::unique_id()));
         let path = dir.join("a.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
         let mut back = School::load(&path).unwrap();
@@ -4156,7 +4156,7 @@ mod tests {
         let mut s = School::from_items(&items, vec!["zork".into()], None, 1, true);
         assert!(s.ask("what is 20 zork 15").answer.is_none(), "beyond what it was taught: not stated as fact by default");
         assert_eq!(s.ask("what is 7 zork 9").answer.as_deref(), Some("16"));
-        let dir = std::env::temp_dir().join(format!("careful_default_{}", std::process::id()));
+        let dir = crate::platform::temp_dir().join(format!("careful_default_{}", crate::platform::unique_id()));
         let path = dir.join("a.school").to_string_lossy().to_string();
         s.save(&path).unwrap();
         assert!(School::load(&path).unwrap().ask("what is 20 zork 15").answer.is_none(), "a saved baby stays careful");
@@ -4227,7 +4227,7 @@ mod tests {
     #[test]
     fn saving_and_loading_changes_nothing() {
         let s = trained();
-        let path = std::env::temp_dir().join(format!("baby_school_{}.school", std::process::id()));
+        let path = crate::platform::temp_dir().join(format!("baby_school_{}.school", crate::platform::unique_id()));
         let path = path.to_str().unwrap().to_string();
         s.save(&path).unwrap();
         let back = School::load(&path).unwrap();

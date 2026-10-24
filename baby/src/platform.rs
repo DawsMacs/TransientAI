@@ -7,6 +7,21 @@
 //! CPU time have the same Linux-only sources, `ledger::Rapl` and `compare::cpu_seconds`; they already return nothing when their
 //! files are missing, so they need no change.) Nothing here uses `unsafe` or a dependency.
 
+/// A directory for temporary files. `std::env::temp_dir()` panics on WASI ("not supported by WASI yet"), so `TMPDIR` is read first (on Unix the standard
+/// function does exactly that, so nothing changes there); a WASI run sets it, for example `wasmtime run --dir /tmp --env TMPDIR=/tmp`.
+pub fn temp_dir() -> std::path::PathBuf {
+    std::env::var_os("TMPDIR").map(std::path::PathBuf::from).unwrap_or_else(std::env::temp_dir)
+}
+
+/// A string that is unique within this run and across runs, for naming temporary files. `std::process::id()` panics on WASI ("no pids on this platform"),
+/// so the time and a counter are used instead.
+pub fn unique_id() -> String {
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos());
+    format!("{t:x}_{n}")
+}
+
 /// One field of `/proc/self/status`, in megabytes: `VmRSS:` is the memory resident now, `VmHWM:` the peak. `NaN` when the system
 /// does not say.
 fn status_mb(key: &str) -> f64 {
@@ -51,6 +66,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn temporary_names_are_unique_and_need_no_process_id() {
+        let (a, b) = (unique_id(), unique_id());
+        assert_ne!(a, b);
+        assert!(temp_dir().join(&a).to_str().is_some());
+    }
+
+    #[test]
     fn an_unavailable_figure_says_so_and_a_real_one_keeps_its_format() {
         assert_eq!(fmt_mb(f64::NAN, 1), "n/a");
         assert_eq!(fmt_mb(f64::NAN, 0), "n/a");
@@ -78,7 +100,7 @@ mod tests {
     fn the_energy_message_does_not_tell_anyone_to_change_permissions_on_a_file_that_is_not_there() {
         let m = energy_unavailable("/nonexistent/path/for/this/test");
         assert!(m.contains("no RAPL energy counter") && !m.contains("chmod"), "{m}");
-        let here = std::env::temp_dir();
+        let here = temp_dir();
         let m = energy_unavailable(&here.to_string_lossy());
         assert!(m.contains("chmod"), "{m}");
     }

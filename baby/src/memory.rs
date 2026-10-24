@@ -124,7 +124,7 @@ mod tests {
     use super::*;
 
     fn tmp(name: &str) -> String {
-        std::env::temp_dir().join(format!("baby_mem_{}_{name}", std::process::id())).to_str().unwrap().to_string()
+        crate::platform::temp_dir().join(format!("baby_mem_{}_{name}", crate::platform::unique_id())).to_str().unwrap().to_string()
     }
 
     fn rare(w: &str) -> f32 {

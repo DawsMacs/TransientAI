@@ -354,7 +354,7 @@ mod tests {
     #[test]
     fn save_then_load_gives_identical_answers() {
         let m = small_model();
-        let path = std::env::temp_dir().join(format!("baby_test_{}.model", std::process::id()));
+        let path = crate::platform::temp_dir().join(format!("baby_test_{}.model", crate::platform::unique_id()));
         let path = path.to_str().unwrap();
         m.save(path).unwrap();
         let back = Model::load(path).unwrap();
