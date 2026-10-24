@@ -1,0 +1,52 @@
+name: Wrong-teacher goldens
+
+# What the baby answers when its teacher is consistently wrong about a share of the facts. About 20 to 40 minutes, so it runs weekly and on
+# demand (Actions tab, "Run workflow"), not on every push; a pull request that changes this job or its goldens runs it once. Reference
+# platform only (Linux x86_64 glibc): a difference FAILS the job. GitHub may disable scheduled workflows on a repository with no activity
+# for about 60 days (believed, not verified): if the weekly run stops appearing, run it by hand once.
+on:
+  schedule:
+    - cron: '17 3 * * 0'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/wrong-teacher.yml'
+      - 'golden/check-wrong-teacher.sh'
+      - 'golden/wrong-teacher/**'
+
+permissions:
+  contents: read
+
+jobs:
+  wrong-teacher:
+    name: wrong-teacher ${{ matrix.stream }} (linux-x86_64-glibc)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        # name:seed:wrong-rate, one stream per job (about 15 minutes per run here, two runs each; a runner may be slower)
+        stream: ['w0.2-seed3:3:0.2', 'w0.1-seed2:2:0.1']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch
+        with:
+          toolchain: stable
+      - name: Record the toolchain
+        run: |
+          rustc -Vv
+          uname -a
+      - name: Wrong-teacher goldens
+        env:
+          WT_CASES: ${{ matrix.stream }}
+        run: |
+          set +e
+          bash golden/check-wrong-teacher.sh 2>&1 | tee wt.out
+          code=${PIPESTATUS[0]}
+          {
+            echo "### Wrong-teacher goldens: ${{ matrix.stream }}"
+            echo '```'
+            grep -E '^(golden|NOT REPRODUCIBLE|DAMAGE|could not|w0\.)' wt.out
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code

@@ -33,4 +33,4 @@ Run it on the reference platform (Linux x86_64). Goldens regenerated elsewhere w
 
 ## Not covered here
 
-The wrong-teacher stream (about 20 to 30 minutes per run) is not a golden yet; it belongs on a schedule, not on every push.
+The wrong-teacher streams (about 6 and 15 minutes per run) are goldens of their own, in `golden/wrong-teacher/`, checked by `golden/check-wrong-teacher.sh` on a schedule (`.github/workflows/wrong-teacher.yml`, weekly and on demand) and not on every push. They are the check that caught a change the clean streams and the regression battery missed.

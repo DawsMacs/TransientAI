@@ -1,0 +1,4 @@
+Generated on 2026-10-24 by the same commands as golden/check-wrong-teacher.sh (two runs per stream, byte-identical).
+rustc: rustc 1.98.1 (48a229cea 2026-09-01)
+host:  Linux 7.0.0-38-generic x86_64
+streams: w0.2-seed3:3:0.2 w0.1-seed2:2:0.1 (repeat 0.3); about 15 and 6 minutes per run on this machine
