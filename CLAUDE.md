@@ -10,7 +10,7 @@ whether or not it works. The code is `baby/` (pure Rust, zero dependencies, buil
 
 1. Read `TransientHandover.md` in full (rewritten 2026-10-21: state, decisions that are Daws's, options, guards, working lessons). It has the state, the numbers, the code map, the plan and what is next, the honest caveats, and the working habits. Then `TransientVision.md` (Daws's own entries, in his
    voice: append dated entries, never rewrite them; assistant context goes in separate labeled sections).
-2. Run the two-minute check in the handover (`cargo test --release --offline`; `./target/release/baby school`; the scorecard's WRONG column must read 0.0%).
+2. Run `git pull --ff-only` and `gh pr list --state all` (pull requests wait for the user to merge them), then the two-minute check in the handover (`cargo test --release --offline`; `./target/release/baby school`; the scorecard's WRONG column must read 0.0%; `bash golden/check.sh`).
 
 ## Rules
 

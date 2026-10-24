@@ -101,14 +101,17 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Reported, not failing: a golden that differs is a finding (a platform difference, or goldens that need updating on
-      # purpose). Three runs per row must first agree with each other, or the comparison would prove nothing.
+      # A golden that differs is a finding. On the REFERENCE row (Linux x86_64 glibc) it FAILS the job: the answers changed, which is either
+      # deliberate (run `golden/check.sh update` in the same commit and say why) or a regression. On every other row it is only reported:
+      # a platform difference is what this matrix exists to find. Three runs per row must first agree with each other, or the comparison
+      # would prove nothing; that disagreement is only a warning even on the reference (hash-map order is a known latent hazard).
       - name: Golden outputs (compared with the Linux x86_64 reference)
         timeout-minutes: 25
         run: |
           set +e
           bash golden/check.sh 2>&1 | tee golden.out
           code=${PIPESTATUS[0]}
+          is_reference=${{ matrix.name == 'linux-x86_64-glibc' }}
           {
             echo "Golden outputs on ${{ matrix.name }}:"
             echo '```'
@@ -117,7 +120,11 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           case $code in
             0) ;;
-            1) echo "::warning title=Goldens differ on ${{ matrix.name }}::see the job summary" ;;
+            1) if [ "$is_reference" = true ]; then
+                 echo "::error title=Goldens differ on the reference row::the answers changed; if that is deliberate, run golden/check.sh update in the same commit and say why"
+                 exit 1
+               fi
+               echo "::warning title=Goldens differ on ${{ matrix.name }}::see the job summary" ;;
             3) echo "::warning title=Runs disagree on ${{ matrix.name }}::see the job summary" ;;
             *) echo "::error::the golden check could not run (status $code)"; exit 1 ;;
           esac
