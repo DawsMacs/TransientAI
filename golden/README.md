@@ -16,7 +16,7 @@ Only deterministic outputs are compared. Timings, memory, joules and meter warni
 ## Reading a result
 
 - **OK** on every file: this platform's answers are byte-identical to the reference.
-- **DIFFERS**: show the difference and say so; do not widen anything or adopt the new output. It means either a platform
+- **DIFFERS**: show the difference and say so; do not widen anything or adopt the new output. In CI this **fails the job on the reference row** (Linux x86_64 glibc) and is only reported on the others. It means either a platform
   difference (for example a math-library last bit that flipped a decision) or a logic change that was not followed by an update.
 - **NOT REPRODUCIBLE** (exit 3): the runs on one machine disagree with each other, so a comparison would prove nothing. The first
   suspect is hash-map iteration order (`baby/README.md`, "Running on other platforms", latent hazards).
